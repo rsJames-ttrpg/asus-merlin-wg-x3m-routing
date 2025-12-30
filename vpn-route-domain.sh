@@ -1,22 +1,76 @@
 #!/bin/sh
 
-# Configuration - edit these for your setup
+# Defaults
 IPSET_NAME="vpn_domains"
-VPN_TABLE="wgc1"          # WireGuard uses wgc1, wgc2, etc.
+VPN_TABLE="wgc1"
 FWMARK="0x1000/0x1000"
 PRIORITY="9995"
 DNSMASQ_CONF="/jffs/configs/dnsmasq.conf.add"
 
 usage() {
-    echo "Usage:"
-    echo "  vpn-route-domain.sh add domain1.com,domain2.com"
-    echo "  vpn-route-domain.sh remove domain1.com"
-    echo "  vpn-route-domain.sh domains          # list routed domains"
-    echo "  vpn-route-domain.sh list             # list IPs in ipset"
-    echo "  vpn-route-domain.sh fix-routing"
-    echo "  vpn-route-domain.sh status"
-    exit 1
+    echo "Usage: vpn-route-domain.sh [OPTIONS] COMMAND [ARGS]"
+    echo ""
+    echo "Commands:"
+    echo "  add DOMAIN[,DOMAIN...]    Add domains to VPN routing"
+    echo "  remove DOMAIN             Remove domain from VPN routing"
+    echo "  domains                   List routed domains"
+    echo "  list                      List IPs in ipset"
+    echo "  fix-routing               Fix routing table for WireGuard"
+    echo "  status                    Show full status"
+    echo ""
+    echo "Options:"
+    echo "  -i, --ipset NAME          IPSET name (default: $IPSET_NAME)"
+    echo "  -t, --table TABLE         Routing table (default: $VPN_TABLE)"
+    echo "  -m, --fwmark MARK         Firewall mark (default: $FWMARK)"
+    echo "  -p, --priority PRIORITY   Rule priority (default: $PRIORITY)"
+    echo "  -c, --config PATH         dnsmasq config path (default: $DNSMASQ_CONF)"
+    echo "  -h, --help                Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  vpn-route-domain.sh add netflix.com,nflxvideo.net"
+    echo "  vpn-route-domain.sh --table wgc2 add example.com"
+    echo "  vpn-route-domain.sh remove netflix.com"
+    exit 0
 }
+
+# Parse options
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i|--ipset)
+            IPSET_NAME="$2"
+            shift 2
+            ;;
+        -t|--table)
+            VPN_TABLE="$2"
+            shift 2
+            ;;
+        -m|--fwmark)
+            FWMARK="$2"
+            shift 2
+            ;;
+        -p|--priority)
+            PRIORITY="$2"
+            shift 2
+            ;;
+        -c|--config)
+            DNSMASQ_CONF="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+COMMAND="$1"
+ARG="$2"
 
 fix_routing() {
     ip rule del fwmark $FWMARK lookup ovpnc1 2>/dev/null
@@ -34,10 +88,8 @@ get_current_domains() {
 }
 
 write_domains() {
-    # Remove all existing ipset lines for our ipset
     sed -i "/ipset=.*\/$IPSET_NAME/d" "$DNSMASQ_CONF"
     
-    # Build new ipset line from sorted unique domains
     DOMAINS="$1"
     if [ -n "$DOMAINS" ]; then
         IPSET_LINE="ipset=/"
@@ -55,9 +107,8 @@ ensure_ipset_exists() {
         echo "Created ipset $IPSET_NAME"
     fi
     
-    # Ensure iptables rule exists
-    if ! iptables -t mangle -C PREROUTING -i br0 -m set --match-set "$IPSET_NAME" dst -j MARK --set-mark 0x1000/0x1000 2>/dev/null; then
-        iptables -t mangle -A PREROUTING -i br0 -m set --match-set "$IPSET_NAME" dst -j MARK --set-mark 0x1000/0x1000
+    if ! iptables -t mangle -C PREROUTING -i br0 -m set --match-set "$IPSET_NAME" dst -j MARK --set-mark $FWMARK 2>/dev/null; then
+        iptables -t mangle -A PREROUTING -i br0 -m set --match-set "$IPSET_NAME" dst -j MARK --set-mark $FWMARK
         echo "Created iptables marking rule"
     fi
 }
@@ -66,7 +117,6 @@ add_domains() {
     NEW_DOMAINS=$(echo "$1" | tr ',' '\n')
     CURRENT=$(get_current_domains)
     
-    # Merge and dedupe
     ALL_DOMAINS=$(printf "%s\n%s" "$CURRENT" "$NEW_DOMAINS" | grep -v '^$' | sort -u)
     
     write_domains "$ALL_DOMAINS"
@@ -86,7 +136,6 @@ remove_domain() {
     CURRENT=$(get_current_domains)
     
     if echo "$CURRENT" | grep -q "^${DOMAIN}$"; then
-        # Filter out the domain
         NEW_DOMAINS=$(echo "$CURRENT" | grep -v "^${DOMAIN}$")
         write_domains "$NEW_DOMAINS"
         
@@ -101,7 +150,7 @@ remove_domain() {
 }
 
 list_domains() {
-    echo "=== Domains routed through VPN ==="
+    echo "=== Domains routed through VPN ($IPSET_NAME) ==="
     DOMAINS=$(get_current_domains)
     if [ -n "$DOMAINS" ]; then
         echo "$DOMAINS"
@@ -111,6 +160,12 @@ list_domains() {
 }
 
 status() {
+    echo "=== Configuration ==="
+    echo "IPSET:    $IPSET_NAME"
+    echo "Table:    $VPN_TABLE"
+    echo "Fwmark:   $FWMARK"
+    echo "Priority: $PRIORITY"
+    echo ""
     echo "=== IP Rules (VPN related) ==="
     ip rule show | grep -E "(wgc|ovpnc|$FWMARK)"
     echo ""
@@ -125,15 +180,15 @@ status() {
     wg show 2>/dev/null | head -5 || echo "WireGuard not running"
 }
 
-case "$1" in
+case "$COMMAND" in
     add)
-        [ -z "$2" ] && usage
-        echo "Adding domains: $2"
-        add_domains "$2"
+        [ -z "$ARG" ] && usage
+        echo "Adding domains: $ARG"
+        add_domains "$ARG"
         ;;
     remove)
-        [ -z "$2" ] && usage
-        remove_domain "$2"
+        [ -z "$ARG" ] && usage
+        remove_domain "$ARG"
         ;;
     domains)
         list_domains

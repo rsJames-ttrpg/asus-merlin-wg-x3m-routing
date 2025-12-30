@@ -35,17 +35,33 @@ LAN Clients → DNS (Pi-hole/dnsmasq) → Router populates ipset
 
 1. SSH into your router
 
-2. Create the script:
+2. Download the script:
 ```bash
-curl -o /jffs/scripts/vpn-route-domain.sh https://raw.githubusercontent.com/YOUR_USERNAME/vpn-route-domain/main/vpn-route-domain.sh
+curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
 chmod +x /jffs/scripts/vpn-route-domain.sh
 ```
 
 3. Add to startup for persistence:
 ```bash
-echo 'sleep 10 && sh /jffs/scripts/vpn-route-domain.sh fix-routing' >> /jffs/scripts/services-start
+cat > /jffs/scripts/services-start << 'EOF'
+#!/bin/sh
+sleep 10 && sh /jffs/scripts/vpn-route-domain.sh fix-routing
+EOF
 chmod +x /jffs/scripts/services-start
 ```
+
+4. (Optional) Create a symlink for easier access:
+```bash
+ln -s /jffs/scripts/vpn-route-domain.sh /opt/bin/vpn-route-domain
+```
+
+Then you can run `vpn-route-domain add example.com` from anywhere.
+
+## Updating
+```bash
+curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
+```
+
 
 ## Usage
 ```bash
