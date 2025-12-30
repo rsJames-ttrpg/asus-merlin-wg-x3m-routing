@@ -1,0 +1,2 @@
+#!/bin/sh
+sleep 10 && sh /jffs/scripts/vpn-route-domain.sh fix-routing
