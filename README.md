@@ -33,33 +33,55 @@ LAN Clients → DNS (Pi-hole/dnsmasq) → Router populates ipset
 
 ## Installation
 
-1. SSH into your router
+### Option 1: CLI Only (Quick Setup)
 
-2. Download the script:
+SSH into your router and run:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
+# Download the script
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
 chmod +x /jffs/scripts/vpn-route-domain.sh
-```
 
-3. Add to startup for persistence:
-```bash
-cat > /jffs/scripts/services-start << 'EOF'
+# Add to startup for persistence
+cat >> /jffs/scripts/services-start << 'EOF'
 #!/bin/sh
 sleep 10 && sh /jffs/scripts/vpn-route-domain.sh fix-routing
 EOF
 chmod +x /jffs/scripts/services-start
+
+# (Optional) Create symlink for easier access
+ln -sf /jffs/scripts/vpn-route-domain.sh /opt/bin/vpn-route-domain
 ```
 
-4. (Optional) Create a symlink for easier access:
+### Option 2: Web UI Installation (Recommended)
+
+SSH into your router and run:
 ```bash
-ln -s /jffs/scripts/vpn-route-domain.sh /opt/bin/vpn-route-domain
+curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/webui/install-webui.sh | sh
 ```
 
-Then you can run `vpn-route-domain add example.com` from anywhere.
+This will:
+- Install the CLI script
+- Add a "VPN Domains" tab to the VPN section of your router's web UI
+- Configure automatic startup
 
-## Updating
+After installation, access **VPN → VPN Domains** in your router's web interface.
+
+### Uninstall
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
+# Remove web UI
+rm -rf /jffs/addons/vpn-route-domain
+rm /jffs/scripts/vpn-route-domain.sh
+
+# Remove from services-start (edit manually)
+nano /jffs/scripts/services-start
+# Remove lines between ### vpn-route-domain start ### and ### vpn-route-domain end ###
+
+# Remove from service-event (edit manually)  
+nano /jffs/scripts/service-event
+# Remove lines between ### vpn-route-domain start ### and ### vpn-route-domain end ###
+
+# Reboot to unmount web UI page
+reboot
 ```
 
 
