@@ -97,6 +97,45 @@
             document.form.submit();
         }
 
+        function refreshDomains() {
+            // Trigger refresh service event
+            document.getElementById('refresh_status').innerHTML = 'Loading...';
+
+            $.ajax({
+                url: '/apply.cgi',
+                type: 'POST',
+                data: {
+                    action_mode: 'apply',
+                    action_script: 'refresh_vpnroutedomain',
+                    action_wait: '2'
+                },
+                success: function () {
+                    // Wait for service to complete, then fetch status file
+                    setTimeout(function () {
+                        $.ajax({
+                            url: '/ext/vpn-route-domain-status.txt',
+                            type: 'GET',
+                            cache: false,
+                            success: function (data) {
+                                var domains = data.trim();
+                                document.getElementById('vpn_rd_domains').value = domains;
+                                document.getElementById('refresh_status').innerHTML =
+                                    'Loaded ' + (domains ? domains.split('\n').length : 0) + ' domains from config';
+                            },
+                            error: function () {
+                                document.getElementById('refresh_status').innerHTML =
+                                    'No domains configured yet';
+                                document.getElementById('vpn_rd_domains').value = '';
+                            }
+                        });
+                    }, 2500);
+                },
+                error: function () {
+                    document.getElementById('refresh_status').innerHTML = 'Error refreshing';
+                }
+            });
+        }
+
     </script>
 </head>
 
@@ -198,6 +237,10 @@
                                                         <br>
                                                         <input type="button" class="button_gen"
                                                             onclick="removeDomain();" value="Remove Selected">
+                                                        <input type="button" class="button_gen"
+                                                            onclick="refreshDomains();" value="Refresh from Config"
+                                                            style="margin-left:5px;">
+                                                        <span id="refresh_status" style="margin-left:10px; font-size:11px;"></span>
                                                     </td>
                                                 </tr>
                                             </table>

@@ -6,6 +6,30 @@ source /usr/sbin/helper.sh
 TYPE=$1
 EVENT=$2
 
+DNSMASQ_CONF="/jffs/configs/dnsmasq.conf.add"
+STATUS_FILE="/www/ext/vpn-route-domain-status.txt"
+
+# Handle refresh request - read current domains from dnsmasq config
+if [ "$EVENT" = "vpnroutedomain" -a "$TYPE" = "refresh" ]; then
+    logger -t "vpn-route-domain" "Refreshing domain list from config..."
+
+    IPSET_NAME=$(am_settings_get vpn_rd_ipset)
+    [ -z "$IPSET_NAME" ] && IPSET_NAME="vpn_domains"
+
+    # Extract domains from dnsmasq.conf.add
+    DOMAINS=$(grep "ipset=.*/$IPSET_NAME" "$DNSMASQ_CONF" 2>/dev/null | \
+        sed "s|ipset=/||g; s|/$IPSET_NAME||g" | \
+        tr '/' '\n' | \
+        grep -v '^$' | \
+        sort -u)
+
+    # Write to status file for web UI to read
+    echo "$DOMAINS" > "$STATUS_FILE"
+
+    logger -t "vpn-route-domain" "Found domains: $(echo $DOMAINS | tr '\n' ' ')"
+fi
+
+# Handle apply/restart request
 if [ "$EVENT" = "vpnroutedomain" -a "$TYPE" = "restart" ]; then
     logger -t "vpn-route-domain" "Applying settings from web UI..."
     
