@@ -100,31 +100,46 @@
         function refreshDomains() {
             document.getElementById('refresh_status').innerHTML = 'Loading...';
 
-            // Set page values and trigger refresh service via hidden form
-            var currentPage = window.location.pathname.substring(1);
-            document.refresh_form.current_page.value = currentPage;
-            document.refresh_form.next_page.value = currentPage;
-            document.refresh_form.submit();
+            // Fetch the status file directly (it should already exist from previous runs)
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/user/vpn-route-domain-status.htm?t=' + Date.now(), true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200 && xhr.responseText.trim() !== '') {
+                        var domains = xhr.responseText.trim();
+                        document.getElementById('vpn_rd_domains').value = domains;
+                        var count = domains.split('\n').filter(function(d) { return d.trim() !== ''; }).length;
+                        document.getElementById('refresh_status').innerHTML = 'Loaded ' + count + ' domains from config';
+                    } else {
+                        // File not found or empty - trigger service to create it
+                        document.getElementById('refresh_status').innerHTML = 'Refreshing...';
+                        var currentPage = window.location.pathname.substring(1);
+                        document.refresh_form.current_page.value = currentPage;
+                        document.refresh_form.next_page.value = currentPage;
+                        document.refresh_form.submit();
 
-            // Wait for service to complete, then fetch status file
-            setTimeout(function () {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', '/ext/vpn-route-domain-status.txt?t=' + Date.now(), true);
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            var domains = xhr.responseText.trim();
-                            document.getElementById('vpn_rd_domains').value = domains;
-                            var count = domains ? domains.split('\n').filter(function(d) { return d.trim() !== ''; }).length : 0;
-                            document.getElementById('refresh_status').innerHTML = 'Loaded ' + count + ' domains from config';
-                        } else {
-                            document.getElementById('refresh_status').innerHTML = 'No domains configured yet';
-                            document.getElementById('vpn_rd_domains').value = '';
-                        }
+                        // Try again after service completes
+                        setTimeout(function() {
+                            var xhr2 = new XMLHttpRequest();
+                            xhr2.open('GET', '/user/vpn-route-domain-status.htm?t=' + Date.now(), true);
+                            xhr2.onreadystatechange = function () {
+                                if (xhr2.readyState === 4) {
+                                    if (xhr2.status === 200 && xhr2.responseText.trim() !== '') {
+                                        var domains = xhr2.responseText.trim();
+                                        document.getElementById('vpn_rd_domains').value = domains;
+                                        var count = domains.split('\n').filter(function(d) { return d.trim() !== ''; }).length;
+                                        document.getElementById('refresh_status').innerHTML = 'Loaded ' + count + ' domains from config';
+                                    } else {
+                                        document.getElementById('refresh_status').innerHTML = 'No domains configured yet';
+                                    }
+                                }
+                            };
+                            xhr2.send();
+                        }, 3000);
                     }
-                };
-                xhr.send();
-            }, 3000);
+                }
+            };
+            xhr.send();
         }
 
     </script>

@@ -7,7 +7,7 @@ TYPE=$1
 EVENT=$2
 
 DNSMASQ_CONF="/jffs/configs/dnsmasq.conf.add"
-STATUS_FILE="/www/ext/vpn-route-domain-status.txt"
+STATUS_FILE="/www/user/vpn-route-domain-status.htm"
 
 # Handle refresh request - read current domains from dnsmasq config
 if [ "$EVENT" = "vpnroutedomain" -a "$TYPE" = "refresh" ]; then
