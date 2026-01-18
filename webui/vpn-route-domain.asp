@@ -17,6 +17,7 @@
     <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
     <script language="JavaScript" type="text/javascript" src="/help.js"></script>
     <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
+    <script type="text/javascript" language="JavaScript" src="/js/httpApi.js"></script>
     <script>
 
         var custom_settings = <% get_custom_settings(); %>;
@@ -103,13 +104,23 @@
         function refreshDomains() {
             document.getElementById('refresh_status').innerHTML = 'Refreshing...';
 
-            // Always trigger service to get fresh data from dnsmasq config
-            var currentPage = window.location.pathname.substring(1);
-            document.refresh_form.current_page.value = currentPage;
-            document.refresh_form.next_page.value = currentPage;
-            document.refresh_form.submit();
+            // Use httpApi to trigger service event
+            if (typeof httpApi !== 'undefined') {
+                httpApi.nvramSet({
+                    'action_mode': 'apply',
+                    'rc_service': 'refresh_vpnroutedomain'
+                }, fetchStatusFile);
+            } else {
+                // Fallback: trigger via form submission
+                var currentPage = window.location.pathname.substring(1);
+                document.refresh_form.current_page.value = currentPage;
+                document.refresh_form.next_page.value = currentPage;
+                document.refresh_form.submit();
+                setTimeout(fetchStatusFile, 3000);
+            }
+        }
 
-            // Fetch status file after service completes
+        function fetchStatusFile() {
             setTimeout(function() {
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', '/user/vpn-route-domain-status.htm?t=' + Date.now(), true);
@@ -127,7 +138,7 @@
                     }
                 };
                 xhr.send();
-            }, 3000);
+            }, 2000);
         }
 
     </script>
