@@ -21,6 +21,7 @@ if [ "$EVENT" = "vpnroutedomain" -a "$TYPE" = "refresh" ]; then
         sed "s|ipset=/||g; s|/$IPSET_NAME||g" | \
         tr '/' '\n' | \
         grep -v '^$' | \
+        grep -v ':' | \
         sort -u)
 
     # Write to status file for web UI to read

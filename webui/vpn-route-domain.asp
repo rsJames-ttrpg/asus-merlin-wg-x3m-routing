@@ -100,7 +100,10 @@
         function refreshDomains() {
             document.getElementById('refresh_status').innerHTML = 'Loading...';
 
-            // Trigger refresh service via hidden form
+            // Set page values and trigger refresh service via hidden form
+            var currentPage = window.location.pathname.substring(1);
+            document.refresh_form.current_page.value = currentPage;
+            document.refresh_form.next_page.value = currentPage;
             document.refresh_form.submit();
 
             // Wait for service to complete, then fetch status file
@@ -133,6 +136,8 @@
     <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 
     <form method="post" name="refresh_form" action="start_apply.htm" target="hidden_frame">
+        <input type="hidden" name="current_page" value="">
+        <input type="hidden" name="next_page" value="">
         <input type="hidden" name="action_mode" value="apply">
         <input type="hidden" name="action_script" value="refresh_vpnroutedomain">
         <input type="hidden" name="action_wait" value="2">

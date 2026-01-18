@@ -84,6 +84,7 @@ get_current_domains() {
         sed "s|ipset=/||g; s|/$IPSET_NAME||g" | \
         tr '/' '\n' | \
         grep -v '^$' | \
+        grep -v ':' | \
         sort -u
 }
 
