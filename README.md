@@ -38,7 +38,7 @@ LAN Clients → DNS (Pi-hole/dnsmasq) → Router populates ipset
 SSH into your router and run:
 ```bash
 # Download the script
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/vpn-route-domain/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-wg-x3m-routing/refs/heads/main/vpn-route-domain.sh -o /jffs/scripts/vpn-route-domain.sh
 chmod +x /jffs/scripts/vpn-route-domain.sh
 
 # Add to startup for persistence
@@ -56,7 +56,7 @@ ln -sf /jffs/scripts/vpn-route-domain.sh /opt/bin/vpn-route-domain
 
 SSH into your router and run:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/webui/install-webui.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rsJames-ttrpg/asus-merlin-wg-x3m-routing/refs/heads/main/webui/install-webui.sh | sh
 ```
 
 This will:
@@ -83,6 +83,28 @@ nano /jffs/scripts/service-event
 # Reboot to unmount web UI page
 reboot
 ```
+
+### CLI Options
+```bash
+vpn-route-domain.sh [OPTIONS] COMMAND [ARGS]
+
+Options:
+  -i, --ipset NAME          IPSET name (default: vpn_domains)
+  -t, --table TABLE         Routing table (default: wgc1)
+  -m, --fwmark MARK         Firewall mark (default: 0x1000/0x1000)
+  -p, --priority PRIORITY   Rule priority (default: 9995)
+  -c, --config PATH         dnsmasq config path
+  -h, --help                Show help
+
+Commands:
+  add DOMAIN[,DOMAIN...]    Add domains to VPN routing
+  remove DOMAIN             Remove domain from VPN routing
+  domains                   List routed domains
+  list                      List IPs in ipset
+  fix-routing               Fix routing table for WireGuard
+  status                    Show full status
+```
+
 
 
 ## Usage

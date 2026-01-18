@@ -16,9 +16,9 @@ mkdir -p "$ADDON_DIR"
 
 # Download files
 echo "Downloading vpn-route-domain..."
-curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/vpn-route-domain.sh" -o "$SCRIPT_DIR/vpn-route-domain.sh"
-curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/webui/vpn-route-domain.asp" -o "$ADDON_DIR/vpn-route-domain.asp"
-curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/vpn-route-domain/main/webui/vpn-route-domain-service.sh" -o "$ADDON_DIR/vpn-route-domain-service.sh"
+curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/asus-merlin-wg-x3m-routing/refs/heads/main/vpn-route-domain.sh" -o "$SCRIPT_DIR/vpn-route-domain.sh"
+curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/asus-merlin-wg-x3m-routing/refs/heads/main/webui/vpn-route-domain.asp" -o "$ADDON_DIR/vpn-route-domain.asp"
+curl -fsSL "https://raw.githubusercontent.com/rsJames-ttrpg/asus-merlin-wg-x3m-routing/refs/heads/main/webui/vpn-route-domain-service.sh" -o "$ADDON_DIR/vpn-route-domain-service.sh"
 
 chmod +x "$SCRIPT_DIR/vpn-route-domain.sh"
 chmod +x "$ADDON_DIR/vpn-route-domain-service.sh"
