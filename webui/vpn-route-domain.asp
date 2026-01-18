@@ -98,42 +98,30 @@
         }
 
         function refreshDomains() {
-            // Trigger refresh service event
             document.getElementById('refresh_status').innerHTML = 'Loading...';
 
-            $.ajax({
-                url: '/apply.cgi',
-                type: 'POST',
-                data: {
-                    action_mode: 'apply',
-                    action_script: 'refresh_vpnroutedomain',
-                    action_wait: '2'
-                },
-                success: function () {
-                    // Wait for service to complete, then fetch status file
-                    setTimeout(function () {
-                        $.ajax({
-                            url: '/ext/vpn-route-domain-status.txt',
-                            type: 'GET',
-                            cache: false,
-                            success: function (data) {
-                                var domains = data.trim();
-                                document.getElementById('vpn_rd_domains').value = domains;
-                                document.getElementById('refresh_status').innerHTML =
-                                    'Loaded ' + (domains ? domains.split('\n').length : 0) + ' domains from config';
-                            },
-                            error: function () {
-                                document.getElementById('refresh_status').innerHTML =
-                                    'No domains configured yet';
-                                document.getElementById('vpn_rd_domains').value = '';
-                            }
-                        });
-                    }, 2500);
-                },
-                error: function () {
-                    document.getElementById('refresh_status').innerHTML = 'Error refreshing';
-                }
-            });
+            // Trigger refresh service via hidden form
+            document.refresh_form.submit();
+
+            // Wait for service to complete, then fetch status file
+            setTimeout(function () {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '/ext/vpn-route-domain-status.txt?t=' + Date.now(), true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            var domains = xhr.responseText.trim();
+                            document.getElementById('vpn_rd_domains').value = domains;
+                            var count = domains ? domains.split('\n').filter(function(d) { return d.trim() !== ''; }).length : 0;
+                            document.getElementById('refresh_status').innerHTML = 'Loaded ' + count + ' domains from config';
+                        } else {
+                            document.getElementById('refresh_status').innerHTML = 'No domains configured yet';
+                            document.getElementById('vpn_rd_domains').value = '';
+                        }
+                    }
+                };
+                xhr.send();
+            }, 3000);
         }
 
     </script>
@@ -143,6 +131,12 @@
     <div id="TopBanner"></div>
     <div id="Loading" class="popup_bg"></div>
     <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+
+    <form method="post" name="refresh_form" action="start_apply.htm" target="hidden_frame">
+        <input type="hidden" name="action_mode" value="apply">
+        <input type="hidden" name="action_script" value="refresh_vpnroutedomain">
+        <input type="hidden" name="action_wait" value="2">
+    </form>
 
     <form method="post" name="form" action="start_apply.htm" target="hidden_frame">
         <input type="hidden" name="current_page" value="">
