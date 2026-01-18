@@ -44,14 +44,12 @@ if [ "$EVENT" = "vpnroutedomain" -a "$TYPE" = "restart" ]; then
     [ -z "$VPN_TABLE" ] && VPN_TABLE="wgc1"
     
     if [ -n "$DOMAINS" ]; then
-        # Convert newlines to commas
-        DOMAIN_LIST=$(echo "$DOMAINS" | tr '\n' ',' | sed 's/,$//')
-        
+        # Domains are already comma-separated from web UI
         # Apply using vpn-route-domain.sh
         sh /jffs/scripts/vpn-route-domain.sh \
             --ipset "$IPSET_NAME" \
             --table "$VPN_TABLE" \
-            add "$DOMAIN_LIST"
+            add "$DOMAINS"
     fi
     
     logger -t "vpn-route-domain" "Settings applied"

@@ -38,8 +38,9 @@
                 custom_settings.vpn_rd_ipset || 'vpn_domains';
             document.getElementById('vpn_rd_table').value =
                 custom_settings.vpn_rd_table || 'wgc1';
-            document.getElementById('vpn_rd_domains').value =
-                custom_settings.vpn_rd_domains || '';
+            // Domains stored as comma-separated, display as newline-separated
+            var domains = custom_settings.vpn_rd_domains || '';
+            document.getElementById('vpn_rd_domains').value = domains.split(',').join('\n');
         }
 
         function addDomain() {
@@ -87,7 +88,9 @@
             // Store settings in object
             custom_settings.vpn_rd_ipset = document.getElementById('vpn_rd_ipset').value;
             custom_settings.vpn_rd_table = document.getElementById('vpn_rd_table').value;
-            custom_settings.vpn_rd_domains = document.getElementById('vpn_rd_domains').value;
+            // Convert newline-separated display to comma-separated storage
+            var domains = document.getElementById('vpn_rd_domains').value.split('\n').filter(function(d) { return d.trim() !== ''; }).join(',');
+            custom_settings.vpn_rd_domains = domains;
 
             // Store object as string in hidden field
             document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
