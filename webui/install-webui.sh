@@ -45,7 +45,8 @@ if [ ! -f /tmp/menuTree.js ]; then
     mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 fi
 
-# Add to VPN menu
+# Add to VPN menu (remove existing entry first to avoid duplicates)
+sed -i '/tabName: "VPN Domains"/d' /tmp/menuTree.js
 sed -i "/url: \"Advanced_VPN_OpenVPN.asp\"/a {url: \"$am_webui_page\", tabName: \"VPN Domains\"}," /tmp/menuTree.js
 umount /www/require/modules/menuTree.js && mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 
